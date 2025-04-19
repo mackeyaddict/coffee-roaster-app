@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Exo 2', sans-serif !important;
+}
+
+.dark-gradient {
+  @apply bg-gradient-to-r from-[#111111] to-[#555555] border-0 shadow-md
+}
+
+.hover-dark-gradient {
+  @apply hover:!bg-gradient-to-r hover:!from-[#555555] hover:!to-[#111111]
+}
