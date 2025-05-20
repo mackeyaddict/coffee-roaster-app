@@ -143,7 +143,7 @@ export default function Chatbot() {
 
         {isOpen && (
           <>
-            <div className="h-[60vh] overflow-y-auto p-4 flex flex-col gap-4 dark-gradient">
+            <div className="h-[60vh] overflow-y-auto p-4 flex flex-col gap-4 dark-gradient w-full">
               {messages.length === 0 ? (
                 renderIdleState()
               ) : (
@@ -154,9 +154,9 @@ export default function Chatbot() {
                       className={`flex ${item.sender === 'user' ? 'justify-end' : 'justify-start'} my-2`}
                     >
                       <div
-                        className="p-3 rounded-xl max-w-[70%] dark-gradient-secondary flex flex-col gap-4"
+                        className="p-3 rounded-xl max-w-full dark-gradient-secondary flex flex-col gap-4"
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start justify-end gap-4 w-full">
                           {item.sender === 'bot' && (
                             <Avatar icon={<BotMessageSquare />} className="!bg-transparent flex-shrink-0" />
                           )}
@@ -172,7 +172,7 @@ export default function Chatbot() {
                             </p>
                           </div>
                           {item.sender === 'user' && (
-                            <Avatar icon={<User />} className="!bg-transparent flex-shrink-0" />
+                            <Avatar icon={<User />} className="!bg-transparent flex-shrink-0 self-right" />
                           )}
                         </div>
                       </div>

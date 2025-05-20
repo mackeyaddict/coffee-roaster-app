@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { Card, Radio, Switch, Tag, Button, Alert, Empty, Spin, Space, Typography, Divider } from 'antd';
 import { CoffeeOutlined, QuestionCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Coffee } from 'lucide-react';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -110,9 +111,9 @@ export default function RoastLineChart({ roastProfiles, loading = false }) {
     <Card
       className="w-full shadow-md"
       title={
-        <div className="flex items-center">
-          <CoffeeOutlined className="text-amber-700 mr-2" />
-          <Title level={4} className="m-0">Roast Profile Analysis</Title>
+        <div className="flex gap-2 items-center">
+          <Coffee size={24} />
+          <p className='text-base font-semibold'>Roast Profile Analysis</p>
         </div>
       }
       extra={
@@ -130,12 +131,13 @@ export default function RoastLineChart({ roastProfiles, loading = false }) {
           message="How to use this chart"
           description={
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li>This chart shows the relationship between roast duration and drop temperature.</li>
-              <li>Toggle between scatter plot and line chart views using the buttons below.</li>
-              <li>Filter by roast levels (Light, Medium, Dark) to identify patterns.</li>
-              <li>Shaded areas represent typical ranges for different roast profiles.</li>
-              <li>Hover over data points to see detailed information for each roast.</li>
+              <li>Grafik ini menunjukkan hubungan antara durasi roasting dan suhu akhir (drop temperature).</li>
+              <li>Beralih antara tampilan scatter plot dan line chart menggunakan tombol di bawah.</li>
+              <li>Filter berdasarkan tingkat roasting (Light, Medium, Dark) untuk mengidentifikasi pola.</li>
+              <li>Area berbayang menunjukkan rentang umum untuk berbagai profil roasting.</li>
+              <li>Arahkan kursor ke titik data untuk melihat informasi detail dari setiap proses roasting.</li>
             </ul>
+
           }
           type="info"
           showIcon
@@ -183,7 +185,7 @@ export default function RoastLineChart({ roastProfiles, loading = false }) {
               name="Duration"
               unit=" min"
               domain={['dataMin - 1', 'dataMax + 1']}
-              label={{ value: 'Duration (minutes)', position: 'insideBottom', offset: -5 }}
+              label={{ value: 'Durasi (menit)', position: 'insideBottom', offset: -5 }}
             />
             <YAxis
               type="number"
@@ -232,7 +234,7 @@ export default function RoastLineChart({ roastProfiles, loading = false }) {
 
       <Divider className="my-4" />
       <Paragraph type="secondary" className="text-xs">
-        This visualization helps identify optimal roast profiles based on beans and desired flavor profiles.
+        Visualisasi ini membantu mengidentifikasi profil roasting yang optimal berdasarkan jenis biji kopi dan cita rasa yang diinginkan.
       </Paragraph>
     </Card>
   );
