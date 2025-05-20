@@ -57,14 +57,9 @@ export default function DashboardLayout({ children }) {
       label: <Link to={PAGE_URL.ROAST} onClick={() => isMobile && setDrawerVisible(false)}>Roast</Link>,
     },
     {
-      key: PAGE_URL.ROAST,
-      icon: <Flame size={16} className="text-white" />,
-      label: <Link to={PAGE_URL.ROAST} onClick={() => isMobile && setDrawerVisible(false)}>Roast</Link>,
-    },
-    {
       key: PAGE_URL.HOME,
       icon: <Home size={16} className="text-white" />,
-      label: <Link to={PAGE_URL.HOME} onClick={() => isMobile && setDrawerVisible(false)}>Back to Home</Link>,
+      label: <Link to={PAGE_URL.HOME} onClick={() => isMobile && setDrawerVisible(false)}>Home</Link>,
     },
   ];
 
