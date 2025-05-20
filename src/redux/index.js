@@ -11,15 +11,17 @@ import {
   REHYDRATE,
   persistReducer,
 } from "redux-persist";
+import roastSlice from "./slice/roast.slice";
 
 const reducers = combineReducers({
   auth: authSlice,
+  roast: roastSlice
 });
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"],
+  whitelist: ["auth", "roast"],
 };
 
 const persistedReducer = persistReducer(persistConfig, reducers);

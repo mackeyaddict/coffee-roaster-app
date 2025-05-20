@@ -9,9 +9,44 @@ body {
 }
 
 .dark-gradient {
-  @apply bg-gradient-to-r from-[#111111] to-[#555555] border-0 shadow-md
+  @apply bg-gradient-to-r from-[#111111] to-[#555555] border-0 shadow-md text-white
 }
 
 .hover-dark-gradient {
-  @apply hover:!bg-gradient-to-r hover:!from-[#555555] hover:!to-[#111111]
+  @apply hover:!bg-gradient-to-r hover:!from-[#555555] hover:!to-[#111111] text-white transition-colors ease-out duration-500
+}
+
+.dark-gradient-secondary {
+  @apply bg-gradient-to-r from-[#333333] to-[#888888] border-0 shadow-md text-white
+}
+
+.hover-dark-gradient-secondary {
+  @apply hover:!bg-gradient-to-r hover:!from-[#888888] hover:!to-[#333333] text-white transition-colors ease-out duration-500
+}
+
+.danger-gradient {
+  @apply bg-gradient-to-r from-red-600 to-red-800 border-0 shadow-md text-white
+}
+
+.hover-danger-gradient {
+  @apply hover:!bg-gradient-to-r hover:!from-red-700 hover:!to-red-900 text-white shadow-md border-0 transition-colors ease-out duration-500
+}
+
+/* @Scrollbar */
+
+/* width */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 3px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
 }

@@ -1,0 +1,56 @@
+@startuml Coffee Roasting App Use Case Diagram
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseStyle rectangle
+
+actor "Pengguna" as User
+
+rectangle "Aplikasi Roasting Kopi" {
+  usecase "Login" as UC1
+  usecase "Verifikasi Kredensial" as UC2
+  usecase "Reset Password" as UC3
+  usecase "Melihat Dashboard" as UC4
+  usecase "Mengelola Profil Roasting" as UC5
+  usecase "Melihat Profil Roasting" as UC6
+  usecase "Membuat Profil Roasting Baru" as UC7
+  usecase "Mengubah Profil Roasting" as UC8
+  usecase "Menghapus Profil Roasting" as UC9
+  usecase "Memulai Proses Roasting" as UC10
+  usecase "Menghentikan Proses Roasting" as UC11
+  usecase "Mengontrol Suhu" as UC12
+  usecase "Mengontrol Pemanas" as UC13
+  usecase "Mengontrol Motor" as UC14
+  usecase "Melihat Grafik Suhu" as UC15
+  usecase "Menyimpan Data ke Database" as UC16
+  usecase "Melihat Landing Page" as UC17
+}
+
+' Relasi aktor dengan use case
+User --> UC1
+User --> UC4
+User --> UC5
+User --> UC17
+User --> UC10
+user --> UC11
+
+' Relasi Include
+UC1 ..> UC2 : <<include>>
+UC10 ..> UC16 : <<include>>
+UC11 ..> UC16 : <<include>>
+UC12 ..> UC16 : <<include>>
+UC13 ..> UC16 : <<include>>
+UC14 ..> UC16 : <<include>>
+UC10 ..> UC15 : <<include>>
+
+' Relasi Extend
+UC3 ..> UC1 : <<extend>>
+UC6 ..> UC5 : <<extend>>
+UC7 ..> UC5 : <<extend>>
+UC8 ..> UC5 : <<extend>>
+UC9 ..> UC5 : <<extend>>
+UC12 ..> UC10 : <<extend>>
+UC13 ..> UC10 : <<extend>>
+UC14 ..> UC10 : <<extend>>
+
+@enduml
