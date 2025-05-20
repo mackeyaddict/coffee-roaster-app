@@ -66,7 +66,7 @@ export default function Login() {
             />
         </div>
         <h1 className="text-xl mt-6 text-center">
-          {isSignUp ? 'Create your account' : 'Hello Barista!'}
+          {isSignUp ? 'Buat Akun' : 'Halo, Homie!'}
         </h1>
       </div>
 
@@ -94,13 +94,13 @@ export default function Login() {
               <Form.Item
                 name="fullName"
                 rules={[
-                  { required: true, message: 'Please input your full name!' },
-                  { min: 2, message: 'Name must be at least 2 characters' }
+                  { required: true, message: 'Masukan nama panjang terlebih dahulu!' },
+                  { min: 2, message: 'Nama harus memiliki setidaknya 2 karakter' }
                 ]}
               >
                 <Input
                   prefix={<UserOutlined className="site-form-item-icon" />}
-                  placeholder="Full Name"
+                  placeholder="Nama Lengkap"
                   size="large"
                 />
               </Form.Item>
@@ -109,8 +109,8 @@ export default function Login() {
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: 'Please input your email!' },
-                { type: 'email', message: 'Please enter a valid email address' }
+                { required: true, message: 'Masukan email terlebih dahulu!' },
+                { type: 'email', message: 'Masukan email yang valid' }
               ]}
             >
               <Input
@@ -123,8 +123,8 @@ export default function Login() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: 'Please input your password!' },
-                { min: 6, message: 'Password must be at least 6 characters' }
+                { required: true, message: 'Masukan password terlebih dahulu!' },
+                { min: 6, message: 'Password harus memiliki setidaknya 6 karakter' }
               ]}
             >
               <Input.Password
@@ -137,7 +137,7 @@ export default function Login() {
             {!isSignUp && (
               <Form.Item>
                 <a className="text-blue-600 hover:text-blue-500" href="#">
-                  Forgot password?
+                  Lupa Password?
                 </a>
               </Form.Item>
             )}
@@ -152,19 +152,19 @@ export default function Login() {
                 className="dark-gradient hover-dark-gradient"
                 icon={isSignUp ? <UserPlus size={20} /> : <LogIn size={20} />}
               >
-                {isSignUp ? 'Sign up' : 'Sign in'}
+                {isSignUp ? 'Daftar' : 'Login'}
               </Button>
             </Form.Item>
           </Form>
           <div className="mt-4 text-center">
             <span className="text-gray-500">
-              {isSignUp ? 'Already have an account?' : 'Need an account?'}
+              {isSignUp ? 'Sudah punya akun?' : 'Perlu akun?'}
               <Button
                 type="link"
                 onClick={toggleAuthMode}
                 className="p-0 ml-1 text-blue-600 hover:text-blue-500"
               >
-                {isSignUp ? 'Sign in' : 'Sign up'}
+                {isSignUp ? 'Login' : 'Daftar'}
               </Button>
             </span>
           </div>
