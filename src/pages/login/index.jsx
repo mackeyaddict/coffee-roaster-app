@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { LogIn, UserPlus } from 'lucide-react';
-import { Form, Input, Button, Alert, Card, Image } from 'antd';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { LogIn, UserPlus, Mail } from 'lucide-react';
+import { Form, Input, Button, Alert, Card, Image, Modal, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined} from '@ant-design/icons';
 import { login } from '../../redux/slice/auth.slice';
 import { auth } from '../../../firebase';
@@ -12,9 +12,12 @@ import Logo from '../../assets/images/black-company-logo.webp'
 
 export default function Login() {
   const [form] = Form.useForm();
+  const [resetForm] = Form.useForm();
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -48,10 +51,44 @@ export default function Login() {
     }
   };
 
+  const handlePasswordReset = async (values) => {
+    setResetLoading(true);
+    
+    try {
+      await sendPasswordResetEmail(auth, values.email);
+      message.success('Email reset password telah dikirim! Periksa inbox Anda.');
+      setResetModalVisible(false);
+      resetForm.resetFields();
+    } catch (err) {
+      let errorMessage = 'Terjadi kesalahan saat mengirim email reset password.';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'Email tidak ditemukan dalam sistem.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Format email tidak valid.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Terlalu banyak permintaan. Coba lagi nanti.';
+      }
+      
+      message.error(errorMessage);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const toggleAuthMode = () => {
     setIsSignUp(!isSignUp);
     setError('');
     form.resetFields();
+  };
+
+  const openResetModal = () => {
+    setResetModalVisible(true);
+  };
+
+  const closeResetModal = () => {
+    setResetModalVisible(false);
+    resetForm.resetFields();
   };
 
   return (
@@ -136,9 +173,13 @@ export default function Login() {
 
             {!isSignUp && (
               <Form.Item>
-                <a className="text-blue-600 hover:text-blue-500" href="#">
+                <Button
+                  type="link"
+                  onClick={openResetModal}
+                  className="p-0 text-blue-600 hover:text-blue-500"
+                >
                   Lupa Password?
-                </a>
+                </Button>
               </Form.Item>
             )}
 
@@ -170,6 +211,65 @@ export default function Login() {
           </div>
         </Card>
       </div>
+
+      {/* Reset Password Modal */}
+      <Modal
+        title="Reset Password"
+        open={resetModalVisible}
+        onCancel={closeResetModal}
+        footer={null}
+        centered
+      >
+        <div className="mb-4">
+          <p className="text-gray-600">
+            Masukkan email Anda dan kami akan mengirimkan link untuk reset password.
+          </p>
+        </div>
+        
+        <Form
+          form={resetForm}
+          name="reset_password_form"
+          layout="vertical"
+          onFinish={handlePasswordReset}
+          autoComplete="off"
+        >
+          <Form.Item
+            name="email"
+            rules={[
+              { required: true, message: 'Masukan email terlebih dahulu!' },
+              { type: 'email', message: 'Masukan email yang valid' }
+            ]}
+          >
+            <Input
+              prefix={<MailOutlined className="site-form-item-icon" />}
+              placeholder="Email"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item className="mb-0">
+            <div className="flex gap-2">
+              <Button
+                onClick={closeResetModal}
+                size="large"
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={resetLoading}
+                size="large"
+                className="flex-1"
+                icon={<Mail size={16} />}
+              >
+                Kirim Email Reset
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

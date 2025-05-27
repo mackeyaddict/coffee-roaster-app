@@ -423,7 +423,7 @@ export default function RoastManual() {
       {/* Temperature Chart */}
       <TemperatureCard
         tempHistory={tempHistory}
-        maxSafetyTemp={maxSafetyTemp} // Pass this for y-axis scaling or reference lines
+        maxSafetyTemp={maxSafetyTemp}
       />
 
       {/* Roast Log Inputs - Visible during roasting */}
