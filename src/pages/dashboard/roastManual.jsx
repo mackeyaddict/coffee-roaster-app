@@ -438,8 +438,6 @@ export default function RoastManual() {
         },
       };
 
-      console.log('Roast data before saving:', roastData);
-
       await addDoc(collection(db, "roastProfile"), roastData);
 
       setSaveDataVisible(false);
