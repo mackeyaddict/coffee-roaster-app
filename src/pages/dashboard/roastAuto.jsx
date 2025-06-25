@@ -310,7 +310,7 @@ export default function RoastingAuto({ isReady }) {
 
   return (
     <div className="p-6 min-h-screen">
-      {isReady ? (
+      {!isReady ? (
         <div className="flex justify-center items-center w-full h-full">
           <Result status={404} title="Coming Soon" subTitle="Fitur belum tersedia." />
         </div>

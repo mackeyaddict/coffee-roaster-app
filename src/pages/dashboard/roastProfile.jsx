@@ -268,7 +268,7 @@ export default function RoastProfile() {
     },
     {
       title: 'Durasi (menit)',
-      dataIndex: 'duration',
+      dataIndex: 'dropTime',
       key: 'duration',
     },
     {

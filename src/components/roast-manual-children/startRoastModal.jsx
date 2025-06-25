@@ -148,10 +148,14 @@ export function SaveDataModal({
   onCancel,
   onFinish,
   form,
-  targetTemperatureDisplay,
-  elapsedTimeDisplay,
-  dropTemperatureDisplay,
 }) {
+  const convertToNumber = (value) => {
+    if (value === "" || value === null || value === undefined) {
+      return null;
+    }
+    const num = Number(value);
+    return isNaN(num) ? null : num;
+  };
   return (
     <Modal
       title={<span className="text-xl font-semibold text-gray-700">Simpan Detail Roast Profile</span>}
@@ -195,7 +199,7 @@ export function SaveDataModal({
           label={<span className="text-sm font-medium text-gray-600">Deskripsi/Catatan Umum</span>}
           className="mb-0"
         >
-          <Input.TextArea rows={2} placeholder="Catatan umum tentang roasting ini" />
+          <Input.TextArea rows={2} placeholder="Catatan umum tentang roasting ini" maxLength={500} showCount />
         </Form.Item>
 
         <Form.Item
@@ -203,66 +207,109 @@ export function SaveDataModal({
           label={<span className="text-xs font-medium text-gray-500">Drop Temp (°C)</span>}
           className="mb-0"
         >
-          <InputNumber style={{ width: '100%' }} prefix={<Thermometer size={16} className="mr-2 text-gray-400" />} />
+          <Input type='number' style={{ width: '100%' }} prefix={<Thermometer size={16} className="mr-2 text-gray-400" />} addonAfter="°C" />
+        </Form.Item>
+
+        <Form.Item
+          name="duration"
+          label={<span className="text-xs font-medium text-gray-500">Durasi</span>}
+          className="mb-0"
+        >
+          <Input type='number' style={{ width: '100%' }} prefix={<Timer size={16} className="mr-2 text-gray-400" />} addonAfter="Menit" />
         </Form.Item>
 
         <h3 className="text-md font-semibold text-gray-700 pt-3 border-t mt-3">Detail Fase Roasting</h3>
 
-        {/* Drying Phase Inputs */}
-        <Card size="small" className="rounded shadow-sm">
-          <div className="p-3">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Drying Phase</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
-              <Form.Item name="dryingPhaseStartTime" label={<span className="text-xs">Start Time</span>} className="mb-0"><Input placeholder="00:00" size="small" /></Form.Item>
-              <Form.Item name="dryingPhaseStartTemp" label={<span className="text-xs">Start Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="150" size="small" /></Form.Item>
-              <Form.Item name="dryingPhaseEndTime" label={<span className="text-xs">End Time</span>} className="mb-0"><Input placeholder="05:30" size="small" /></Form.Item>
-              <Form.Item name="dryingPhaseEndTemp" label={<span className="text-xs">End Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="165" size="small" /></Form.Item>
+        <div className='flex flex-col gap-4'>
+          {/* Drying Phase Inputs */}
+          <Card size="small" className="rounded shadow-sm">
+            <div className="p-3">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Drying Phase</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
+                <Form.Item name="dryingPhaseStartTime" label={<span className="text-xs">Start Time</span>} className="mb-0">
+                  <Input type='number' placeholder="5" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="dryingPhaseStartTemp" label={<span className="text-xs">Start Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="150" size="small" addonAfter="°C" />
+                </Form.Item>
+                <Form.Item name="dryingPhaseEndTime" label={<span className="text-xs">End Time</span>} className="mb-0">
+                  <Input type='number' placeholder="10" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="dryingPhaseEndTemp" label={<span className="text-xs">End Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="165" size="small" addonAfter="°C" />
+                </Form.Item>
+              </div>
+              <Form.Item name="dryingPhaseNotes" label={<span className="text-xs">Notes</span>} className="mt-2 mb-0">
+                <Input.TextArea rows={1} placeholder="Yellowing, aroma..." size="small" maxLength={100} showCount />
+              </Form.Item>
             </div>
-            <Form.Item name="dryingPhaseNotes" label={<span className="text-xs">Notes</span>} className="mt-2 mb-0"><Input.TextArea rows={1} placeholder="Yellowing, aroma..." size="small" /></Form.Item>
-          </div>
-        </Card>
+          </Card>
 
-        {/* First Crack Inputs */}
-        <Card size="small" className="rounded shadow-sm">
-          <div className="p-3">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">First Crack</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
-              <Form.Item name="firstCrackTime" label={<span className="text-xs">Time</span>} className="mb-0"><Input placeholder="08:15" size="small" /></Form.Item>
-              <Form.Item name="firstCrackTemp" label={<span className="text-xs">Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="196" size="small" /></Form.Item>
-              <div className="sm:col-span-1"> {/* Placeholder for notes to take full width if needed */}
-                <Form.Item name="firstCrackNotes" label={<span className="text-xs">Notes</span>} className="mb-0"><Input.TextArea rows={1} placeholder="Mulai terdengar..." size="small" /></Form.Item>
+          {/* First Crack Inputs */}
+          <Card size="small" className="rounded shadow-sm">
+            <div className="p-3">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">First Crack</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
+                <Form.Item name="firstCrackTime" label={<span className="text-xs">Time</span>} className="mb-0">
+                  <Input type='number' placeholder="10" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="firstCrackTemp" label={<span className="text-xs">Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="196" size="small" addonAfter="°C" />
+                </Form.Item>
+                <div className="sm:col-span-1">
+                  <Form.Item name="firstCrackNotes" label={<span className="text-xs">Notes</span>} className="mb-0">
+                    <Input.TextArea rows={1} placeholder="Mulai terdengar..." size="small" maxLength={100} showCount />
+                  </Form.Item>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Development Phase Inputs */}
-        <Card size="small" className="rounded shadow-sm">
-          <div className="p-3">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Development Phase</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
-              <Form.Item name="developmentPhaseStartTime" label={<span className="text-xs">Start Time</span>} className="mb-0"><Input placeholder="08:20" size="small" /></Form.Item>
-              <Form.Item name="developmentPhaseStartTemp" label={<span className="text-xs">Start Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="198" size="small" /></Form.Item>
-              <Form.Item name="developmentPhaseEndTime" label={<span className="text-xs">End Time</span>} className="mb-0"><Input placeholder="10:30" size="small" /></Form.Item>
-              <Form.Item name="developmentPhaseEndTemp" label={<span className="text-xs">End Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="210" size="small" /></Form.Item>
+          {/* Development Phase Inputs */}
+          <Card size="small" className="rounded shadow-sm">
+            <div className="p-3">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Development Phase</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
+                <Form.Item name="developmentPhaseStartTime" label={<span className="text-xs">Start Time</span>} className="mb-0">
+                  <Input type='number' placeholder="11" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="developmentPhaseStartTemp" label={<span className="text-xs">Start Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="198" size="small" addonAfter="°C" />
+                </Form.Item>
+                <Form.Item name="developmentPhaseEndTime" label={<span className="text-xs">End Time</span>} className="mb-0">
+                  <Input placeholder="12" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="developmentPhaseEndTemp" label={<span className="text-xs">End Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="210" size="small" addonAfter="°C" />
+                </Form.Item>
+              </div>
+              <Form.Item name="developmentPhaseNotes" label={<span className="text-xs">Notes</span>} className="mt-2 mb-0">
+                <Input.TextArea rows={1} placeholder="Pengembangan aroma..." size="small" maxLength={100} showCount />
+              </Form.Item>
             </div>
-            <Form.Item name="developmentPhaseNotes" label={<span className="text-xs">Notes</span>} className="mt-2 mb-0"><Input.TextArea rows={1} placeholder="Pengembangan aroma..." size="small" /></Form.Item>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Second Crack Inputs */}
-        <Card size="small" className="rounded shadow-sm">
-          <div className="p-3">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Second Crack (jika ada)</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
-              <Form.Item name="secondCrackTime" label={<span className="text-xs">Time</span>} className="mb-0"><Input placeholder="11:00" size="small" /></Form.Item>
-              <Form.Item name="secondCrackTemp" label={<span className="text-xs">Temp (°C)</span>} className="mb-0"><InputNumber className="w-full" placeholder="220" size="small" /></Form.Item>
-              <div className="sm:col-span-1">
-                <Form.Item name="secondCrackNotes" label={<span className="text-xs">Notes</span>} className="mb-0"><Input.TextArea rows={1} placeholder="Crack lebih halus..." size="small" /></Form.Item>
+          {/* Second Crack Inputs */}
+          <Card size="small" className="rounded shadow-sm">
+            <div className="p-3">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Second Crack (jika ada)</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
+                <Form.Item name="secondCrackTime" label={<span className="text-xs">Time</span>} className="mb-0">
+                  <Input type='number' placeholder="15" size="small" addonBefore="Menit" />
+                </Form.Item>
+                <Form.Item name="secondCrackTemp" label={<span className="text-xs">Temp (°C)</span>} className="mb-0">
+                  <Input type='number' className="w-full" placeholder="220" size="small" addonAfter="°C" />
+                </Form.Item>
+                <div className="sm:col-span-1">
+                  <Form.Item name="secondCrackNotes" label={<span className="text-xs">Notes</span>} className="mb-0">
+                    <Input.TextArea rows={1} placeholder="Crack lebih halus..." size="small" maxLength={100} showCount />
+                  </Form.Item>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
+
       </Form>
     </Modal>
   );

@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, notification } from 'antd';
-import { AlertTriangle, Bell } from 'lucide-react';
+import { AlertTriangle, Bell, Coffee } from 'lucide-react';
 import { ref, onValue, set } from 'firebase/database';
 import { rtdb, db } from '../../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { SaveDataModal, StartRoastModal, StopConfirmModal } from '../../components/roast-manual-children/startRoastModal';
 import StatusCard from '../../components/roast-manual-children/statusCard';
 import ControlCard from '../../components/roast-manual-children/controlCard';
 import TemperatureCard from '../../components/roast-manual-children/temperatureCard';
 import AverageTempCard from '../../components/roast-manual-children/averageTempCard';
 import RoastNotesCard from '../../components/roast-manual-children/roastNotesCard';
+import { useSound } from 'react-sounds';
+import LoadRoastModal from '../../components/roast-manual-children/loadRoast';
+import { secondsToMinutes } from '../../utils/timeTranslate';
 
 const initialRoastLogState = {
+  name: "",
   description: "",
+  dropTemperature: "",
   roastPhase: {
     dryingPhase: { notes: "", startTime: "", startTemp: "", endTime: "", endTemp: "" },
     firstCrack: { notes: "", time: "", temp: "" },
@@ -21,7 +26,6 @@ const initialRoastLogState = {
   },
   roastLevel: "",
 };
-
 
 export default function RoastManual() {
   const [heaterStatus, setHeaterStatus] = useState(false);
@@ -41,7 +45,7 @@ export default function RoastManual() {
   const [isNearingSafetyLimit, setIsNearingSafetyLimit] = useState(false);
   const [autoShutoffEnabled, setAutoShutoffEnabled] = useState(true);
   const [heaterControlDisabled, setHeaterControlDisabled] = useState(false);
-  
+
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timerDuration, setTimerDuration] = useState(5);
   const [timerNotificationSent, setTimerNotificationSent] = useState(false);
@@ -52,9 +56,50 @@ export default function RoastManual() {
   const [startForm] = Form.useForm();
   const [saveForm] = Form.useForm();
 
-  // New state for detailed roast log
   const [roastLog, setRoastLog] = useState(initialRoastLogState);
   const [finalDropTemperature, setFinalDropTemperature] = useState(0);
+
+  const [loadProfileVisible, setLoadProfileVisible] = useState(false);
+
+  const soundConfig = {
+    volume: 0.7,
+    playbackRate: 1,
+    interrupt: true,
+    autoDestroy: true,
+  };
+
+  // Initialize sound hooks
+  const { play: playSuccessSound } = useSound('ui/success_bling', soundConfig);
+  const { play: playWarningSound } = useSound('notification/info', soundConfig);
+  const { play: playErrorSound } = useSound('notification/info', soundConfig);
+  const { play: playInfoSound } = useSound('notification/reminder', soundConfig);
+  const { play: playAlertSound } = useSound('notification/info', soundConfig);
+
+  const playNotificationSound = (type) => {
+    try {
+      switch (type) {
+        case 'success':
+          playSuccessSound();
+          break;
+        case 'warning':
+          playWarningSound();
+          break;
+        case 'error':
+          playErrorSound();
+          break;
+        case 'info':
+          playInfoSound();
+          break;
+        case 'alert':
+          playAlertSound();
+          break;
+        default:
+          playInfoSound();
+      }
+    } catch (error) {
+      console.warn('Failed to play notification sound:', error);
+    }
+  };
 
   useEffect(() => {
     const temperatureRef = ref(rtdb, 'manualRoast/temperature');
@@ -65,6 +110,7 @@ export default function RoastManual() {
       if (isRoasting) {
         if (!isTargetReached && tempValue >= targetTemperature) {
           setIsTargetReached(true);
+          playNotificationSound('info');
           notification.open({
             message: 'Suhu Target Tercapai',
             description: `Suhu telah mencapai target Anda yaitu ${targetTemperature}°C.`,
@@ -75,6 +121,7 @@ export default function RoastManual() {
 
         if (!isNearingSafetyLimit && tempValue >= maxSafetyTemp - 10) {
           setIsNearingSafetyLimit(true);
+          playNotificationSound('warning');
           notification.warning({
             message: 'Mendekati Suhu Maksimum',
             description: `Suhu mendekati batas keamanan. Hanya ${maxSafetyTemp - tempValue}°C sebelum pemanas mati otomatis.`,
@@ -83,9 +130,10 @@ export default function RoastManual() {
           });
         }
 
-        if (autoShutoffEnabled && tempValue >= maxSafetyTemp - 10) { // Adjusted condition slightly
+        if (autoShutoffEnabled && tempValue >= maxSafetyTemp - 10) {
           setHeaterStatus(false);
           setHeaterControlDisabled(true);
+          playNotificationSound('error');
           notification.error({
             message: 'Pemutus Otomatis Pemanas Diaktifkan',
             description: 'Pemanas telah dimatikan untuk keamanan. Kontrol pemanas akan diaktifkan kembali ketika suhu menurun.',
@@ -93,10 +141,11 @@ export default function RoastManual() {
             duration: 10,
           });
         }
-        
-        if (heaterControlDisabled && tempValue < maxSafetyTemp - 20) { // Increased hysteresis
+
+        if (heaterControlDisabled && tempValue < maxSafetyTemp - 20) {
           setHeaterControlDisabled(false);
-          setIsNearingSafetyLimit(false); // Reset this as well
+          setIsNearingSafetyLimit(false);
+          playNotificationSound('success');
           notification.success({
             message: 'Kontrol Pemanas Diaktifkan Kembali',
             description: 'Suhu telah turun ke level yang aman. Kontrol pemanas sekarang sudah aktif.',
@@ -107,7 +156,7 @@ export default function RoastManual() {
         if (tempValue >= SYSTEM_MAX_TEMPERATURE) {
           setHeaterStatus(false);
           setHeaterControlDisabled(true);
-          // Potentially trigger a full stop or more critical alert
+          playNotificationSound('alert');
           notification.error({
             message: 'PERHATIAN: Suhu Maksimum Sistem Terlampaui',
             description: 'Sistem telah mematikan pemanas. Harap biarkan sistem mendingin dan periksa.',
@@ -124,7 +173,7 @@ export default function RoastManual() {
           temp: tempValue,
           elapsed: elapsedTime,
           target: targetTemperature
-        }].slice(-30); // Keep last 30 entries
+        }].slice(-30);
 
         if (newHistory.length > 0) {
           const temps = newHistory.map(item => item.temp);
@@ -139,7 +188,7 @@ export default function RoastManual() {
       });
     });
     return () => unsubscribe();
-  }, [elapsedTime, isRoasting, targetTemperature, isTargetReached, maxSafetyTemp, isNearingSafetyLimit, autoShutoffEnabled, heaterControlDisabled, SYSTEM_MAX_TEMPERATURE]); // Added SYSTEM_MAX_TEMPERATURE
+  }, [elapsedTime, isRoasting, targetTemperature, isTargetReached, maxSafetyTemp, isNearingSafetyLimit, autoShutoffEnabled, heaterControlDisabled, SYSTEM_MAX_TEMPERATURE]);
 
   useEffect(() => {
     let interval;
@@ -148,6 +197,7 @@ export default function RoastManual() {
         setElapsedTime(prev => {
           const newElapsedTime = prev + 1;
           if (timerEnabled && !timerNotificationSent && (newElapsedTime >= timerDuration * 60)) {
+            playNotificationSound('info');
             notification.info({
               message: 'Timer Tercapai',
               description: `Durasi timer yang diatur (${timerDuration} menit) telah tercapai.`,
@@ -206,9 +256,9 @@ export default function RoastManual() {
     setHeaterControlDisabled(false);
     setHeaterStatus(true);
     setMotorStatus(true);
-    setRoastLog(initialRoastLogState); // Reset roast log
+    setRoastLog(initialRoastLogState);
     setFinalDropTemperature(0);
-    setTempHistory([]); // Clear history for new roast
+    setTempHistory([]);
 
     set(ref(rtdb, 'manualRoast/status'), 'roasting');
     set(ref(rtdb, 'manualRoast/targetTemp'), values.targetTemperature);
@@ -220,6 +270,7 @@ export default function RoastManual() {
     if (!heaterControlDisabled) {
       setHeaterStatus(prev => !prev);
     } else {
+      playNotificationSound('warning');
       notification.warning({
         message: 'Kontrol Pemanas Dinon-aktifkan',
         description: 'Kontrol pemanas saat ini dinonaktifkan untuk keselamatan. Tunggu suhu menurun.',
@@ -238,7 +289,7 @@ export default function RoastManual() {
       setStopConfirmVisible(true);
     }
   };
-  
+
   const resetCoreStates = () => {
     setHeaterStatus(false);
     setMotorStatus(false);
@@ -252,18 +303,18 @@ export default function RoastManual() {
   }
 
   const handleStopRoast = () => {
-    const capturedDropTemperature = temperature; // Capture current temperature as drop temperature
+    const capturedDropTemperature = temperature;
     setFinalDropTemperature(capturedDropTemperature);
-    
-    resetCoreStates(); // Turn off heater, motor, reset roasting flags
+
+    resetCoreStates();
     setStopConfirmVisible(false);
 
     saveForm.setFieldsValue({
-      roastName: "My Roast Profile", // Default name
+      name: roastLog.name,
       targetTemperature: targetTemperature,
-      duration: elapsedTime, // This is total elapsed time for the roast
+      duration: secondsToMinutes(elapsedTime),
       dropTemperature: capturedDropTemperature,
-      
+
       description: roastLog.description,
       roastLevel: roastLog.roastLevel,
 
@@ -291,13 +342,13 @@ export default function RoastManual() {
   };
 
   const resetPostSaveStates = () => {
-    setTargetTemperature(180); // Default
-    setMaxSafetyTemp(220);   // Default
+    setTargetTemperature(180);
+    setMaxSafetyTemp(220);
     setAutoShutoffEnabled(true);
     setTimerEnabled(false);
     setTimerDuration(5);
     setMaxTemp(0);
-    setMinTemp(0); // Or a high number like 999 if that's preferred for initial min
+    setMinTemp(0);
     setAvgTemp(0);
     setTempHistory([]);
     setRoastLog(initialRoastLogState);
@@ -305,59 +356,104 @@ export default function RoastManual() {
     saveForm.resetFields();
   };
 
+
+  const handleLoadProfile = (profile) => {
+    setRoastLog({
+      name: profile.name || "",
+      description: profile.description || "",
+      dropTemperature: profile.dropTemperature || "",
+      duration: profile.duration || "",
+      roastLevel: profile.roastLevel || "",
+      roastPhase: {
+        dryingPhase: {
+          notes: profile.roastPhase?.dryingPhase?.notes || "",
+          startTime: profile.roastPhase?.dryingPhase?.startTime || "",
+          startTemp: profile.roastPhase?.dryingPhase?.startTemp || "",
+          endTime: profile.roastPhase?.dryingPhase?.endTime || "",
+          endTemp: profile.roastPhase?.dryingPhase?.endTemp || "",
+        },
+        firstCrack: {
+          notes: profile.roastPhase?.firstCrack?.notes || "",
+          time: profile.roastPhase?.firstCrack?.time || "",
+          temp: profile.roastPhase?.firstCrack?.temp || "",
+        },
+        developmentPhase: {
+          notes: profile.roastPhase?.developmentPhase?.notes || "",
+          startTime: profile.roastPhase?.developmentPhase?.startTime || "",
+          startTemp: profile.roastPhase?.developmentPhase?.startTemp || "",
+          endTime: profile.roastPhase?.developmentPhase?.endTime || "",
+          endTemp: profile.roastPhase?.developmentPhase?.endTemp || "",
+        },
+        secondCrack: {
+          notes: profile.roastPhase?.secondCrack?.notes || "",
+          time: profile.roastPhase?.secondCrack?.time || "",
+          temp: profile.roastPhase?.secondCrack?.temp || "",
+        }
+      }
+    });
+  };
+
+  console.log("Waktu", secondsToMinutes(elapsedTime))
   const handleSaveRoastData = async (values) => {
     try {
+      const toNumber = (value) => {
+        if (value === null || value === undefined || value === "") return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+      };
+
       const roastData = {
-        // id: will be auto-generated by Firestore
-        name: values.roastName,
-        description: values.description || "", // Ensure empty string if not provided
+        name: values.name || "",
+        description: values.description || "",
         roastLevel: values.roastLevel || "",
-        duration: elapsedTime, // Use state value at time of stop
-        targetTemperature: targetTemperature, // Use state value
-        dropTemperature: finalDropTemperature, // Use state value captured at stop
-        timestamp: serverTimestamp(), // Use Firestore server timestamp
+        duration: toNumber(values.duration),
+        targetTemperature: toNumber(targetTemperature),
+        dropTemperature: toNumber(finalDropTemperature || values.dropTemperature),
+        timestamp: serverTimestamp(),
         roastPhase: {
           dryingPhase: {
             notes: values.dryingPhaseNotes || "",
-            startTime: values.dryingPhaseStartTime || "",
-            startTemp: values.dryingPhaseStartTemp || "",
-            endTime: values.dryingPhaseEndTime || "",
-            endTemp: values.dryingPhaseEndTemp || "",
+            startTime: toNumber(values.dryingPhaseStartTime),
+            startTemp: toNumber(values.dryingPhaseStartTemp),
+            endTime: toNumber(values.dryingPhaseEndTime),
+            endTemp: toNumber(values.dryingPhaseEndTemp),
           },
           firstCrack: {
             notes: values.firstCrackNotes || "",
-            time: values.firstCrackTime || "",
-            temp: values.firstCrackTemp || "",
+            time: toNumber(values.firstCrackTime),
+            temp: toNumber(values.firstCrackTemp),
           },
           developmentPhase: {
             notes: values.developmentPhaseNotes || "",
-            startTime: values.developmentPhaseStartTime || "",
-            startTemp: values.developmentPhaseStartTemp || "",
-            endTime: values.developmentPhaseEndTime || "",
-            endTemp: values.developmentPhaseEndTemp || "",
+            startTime: toNumber(values.developmentPhaseStartTime),
+            startTemp: toNumber(values.developmentPhaseStartTemp),
+            endTime: toNumber(values.developmentPhaseEndTime),
+            endTemp: toNumber(values.developmentPhaseEndTemp),
           },
           secondCrack: {
             notes: values.secondCrackNotes || "",
-            time: values.secondCrackTime || "",
-            temp: values.secondCrackTemp || "",
+            time: toNumber(values.secondCrackTime),
+            temp: toNumber(values.secondCrackTemp),
           }
         },
-        // Add tempHistory if you want to save it too, can be large
-        // tempHistory: tempHistory, 
       };
 
+      console.log('Roast data before saving:', roastData);
+
       await addDoc(collection(db, "roastProfile"), roastData);
-      
+
       setSaveDataVisible(false);
+      playNotificationSound('success');
       notification.success({
         message: 'Roast Profile Berhasil Disimpan',
-        description: `"${values.roastName}" telah berhasil disimpan.`,
+        description: `"${values.name}" telah berhasil disimpan.`,
         duration: 5,
       });
       resetPostSaveStates();
 
     } catch (error) {
       console.error("Error saving roast data:", error);
+      playNotificationSound('error');
       notification.error({
         message: 'Gagal Menyimpan',
         description: `Gagal menyimpan profil roasting: ${error.message}`,
@@ -371,7 +467,6 @@ export default function RoastManual() {
     resetPostSaveStates();
   };
 
-  // Handler for roast log inputs
   const handleRoastLogChange = (path, value) => {
     setRoastLog(prevLog => {
       const newLog = { ...prevLog };
@@ -388,7 +483,7 @@ export default function RoastManual() {
       return newLog;
     });
   };
-  
+
   return (
     <div className='py-6'>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -420,13 +515,25 @@ export default function RoastManual() {
         />
       </div>
 
-      {/* Temperature Chart */}
       <TemperatureCard
         tempHistory={tempHistory}
         maxSafetyTemp={maxSafetyTemp}
       />
 
-      {/* Roast Log Inputs - Visible during roasting */}
+
+      {isRoasting && (
+        <div className="my-4">
+          <Button
+            onClick={() => setLoadProfileVisible(true)}
+            icon={<Coffee size={16} />}
+            className="mb-2"
+          >
+            Muat Profil Roasting
+          </Button>
+        </div>
+      )}
+
+
       {isRoasting && (
         <RoastNotesCard
           roastLog={roastLog}
@@ -434,7 +541,6 @@ export default function RoastManual() {
         />
       )}
 
-      {/* Modals */}
       <StartRoastModal
         visible={startModalVisible}
         onCancel={() => setStartModalVisible(false)}
@@ -457,6 +563,12 @@ export default function RoastManual() {
         targetTemperatureDisplay={targetTemperature}
         elapsedTimeDisplay={elapsedTime}
         dropTemperatureDisplay={finalDropTemperature}
+      />
+
+      <LoadRoastModal
+        visible={loadProfileVisible}
+        onCancel={() => setLoadProfileVisible(false)}
+        onLoadProfile={handleLoadProfile}
       />
     </div>
   );

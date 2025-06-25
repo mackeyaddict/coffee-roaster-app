@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Card, Form, Input, InputNumber } from 'antd';
-import { Coffee } from 'lucide-react';;
+import { Coffee, Thermometer, Timer } from 'lucide-react';;
 
 export default function RoastNotesCard({
   roastLog,
@@ -9,8 +9,11 @@ export default function RoastNotesCard({
   const [form] = Form.useForm();
   useEffect(() => {
     form.setFieldsValue({
+      name: roastLog.name,
+      duration: roastLog.duration,
       roastLevel: roastLog.roastLevel,
       description: roastLog.description,
+      dropTemperature: roastLog.dropTemperature,
       roastPhase: {
         dryingPhase: roastLog.roastPhase.dryingPhase,
         firstCrack: roastLog.roastPhase.firstCrack,
@@ -53,7 +56,7 @@ export default function RoastNotesCard({
         >
           <div className="grid grid-cols-1 gap-2">
             <Form.Item
-              name="Nama Profil"
+              name="name"
               label="Nama"
             >
               <Input
@@ -69,6 +72,26 @@ export default function RoastNotesCard({
               <Input.TextArea
                 rows={2}
                 placeholder="Catatan keseluruhan roasting."
+                className="w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              name="dropTemperature"
+              label="Drop Temperature"
+            >
+              <Input
+                prefix={<Thermometer size={16} className="mr-2 text-gray-400" />}
+                placeholder="150"
+                className="w-full"
+              />
+            </Form.Item>
+            <Form.Item
+              name="duration"
+              label="Durasi"
+            >
+              <Input
+                prefix={<Timer size={16} className="mr-2 text-gray-400" />}
+                placeholder="150"
                 className="w-full"
               />
             </Form.Item>
